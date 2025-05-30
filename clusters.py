@@ -12,9 +12,8 @@ class Clusters:
             self._weights[cluster_size] = total_particle_count
 
     @classmethod
-    def create_monomers(cls, count):
-        d = {1: count}
-        return cls(d)
+    def create_monomers(cls, count: int):
+        return cls({1: count})
 
     def __str__(self):
         return str(self._cluster_counts)
@@ -25,16 +24,16 @@ class Clusters:
     def cluster_counts(self):
         return self._cluster_counts.copy()
 
-    def cluster_count(self, cluster_size):
+    def cluster_count(self, cluster_size: int) -> int:
         if cluster_size in self._cluster_counts:
             return self._cluster_counts[cluster_size]
         else:
             return 0
 
-    def collision_count(self):
+    def collision_count(self) -> int:
         return self._collision_count
 
-    def collide(self, times, removals=0):
+    def collide(self, times: int, removals: int =0) -> int:
         successful_collisions = 0
         for i in range(times):
             # check if there is only 1 or no clusters left
@@ -42,18 +41,18 @@ class Clusters:
                 break
             else:
                 # pick one cluster
-                a = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
-                self.remove_cluster(a)
+                cluster_size_a = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
+                self.remove_cluster(cluster_size_a)
                 # pick another cluster
-                b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
-                self.remove_cluster(b)
-                if a + b - removals > 0:
-                    self.add_cluster(a + b - removals)
+                cluster_size_b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
+                self.remove_cluster(cluster_size_b)
+                if cluster_size_a + cluster_size_b - removals > 0:
+                    self.add_cluster(cluster_size_a + cluster_size_b - removals)
                 successful_collisions += 1
         self._collision_count += successful_collisions
         return successful_collisions
 
-    def add_cluster(self, cluster_size):
+    def add_cluster(self, cluster_size: int):
         if cluster_size in self._cluster_counts:
             self._cluster_counts[cluster_size] += 1
             self._weights[cluster_size] += cluster_size
@@ -64,7 +63,7 @@ class Clusters:
             raise ValueError(f'cannot have cluster of size {cluster_size} in group of clusters')
         self._particle_count += cluster_size
 
-    def remove_cluster(self, cluster_size):
+    def remove_cluster(self, cluster_size: int):
         if cluster_size in self._cluster_counts:
             if self._cluster_counts[cluster_size] == 1:
                 del self._cluster_counts[cluster_size]
