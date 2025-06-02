@@ -39,11 +39,17 @@ class Clusters:
             l.append([cluster_size] * cluster_count)
         return l
 
+    def has_one_cluster(self):
+        return len(self._cluster_counts) == 1 and next(iter(self._cluster_counts.values())) == 1
+
+    def is_empty(self):
+        return self.particle_count() == 0
+
     def collide(self, times: int, removals: int =0) -> int:
         successful_collisions = 0
         for i in range(times):
             # check if there is only 1 or no clusters left
-            if (len(self._cluster_counts) == 1 and next(iter(self._cluster_counts.values())) == 1) or self.particle_count() == 0:
+            if self.has_one_cluster() or self.is_empty():
                 break
             else:
                 # pick one cluster
