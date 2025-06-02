@@ -33,6 +33,12 @@ class Clusters:
     def collision_count(self) -> int:
         return self._collision_count
 
+    def cluster_list(self) -> list:
+        l = []
+        for cluster_size, cluster_count in self._cluster_counts.items():
+            l.append([cluster_size] * cluster_count)
+        return l
+
     def collide(self, times: int, removals: int =0) -> int:
         successful_collisions = 0
         for i in range(times):
