@@ -48,7 +48,6 @@ class Clusters:
     def collide(self, times: int, removals: int =0) -> int:
         successful_collisions = 0
         for i in range(times):
-            # check if there is only 1 or no clusters left
             if self.has_one_cluster() or self.is_empty():
                 break
             else:
@@ -86,3 +85,42 @@ class Clusters:
             self._particle_count -= cluster_size
         else:
             raise ValueError(f'no cluster of size {cluster_size} in group of clusters')
+
+import matplotlib.pyplot as plt
+import math
+from scipy.interpolate import make_smoothing_spline
+import numpy as np
+
+class ClusterTracker:
+    def __init__(self, clusters, normalize=False):
+        self._clusters = clusters
+        self._trackers = {}
+        self._collisions = 0
+        self._normalize = normalize
+        self._initial_particle_count = self._clusters.particle_count()
+
+    def add_tracker(self, name, f):
+        self._trackers[name] = (lambda: f(self._clusters), [])
+
+    def run(self, limit=math.inf, removals=0):
+        while not self._clusters.has_one_cluster() and not self._clusters.is_empty() and self._collisions < limit:
+            for tup in self._trackers.values():
+                result = tup[0]()
+                # if data must be normalized
+                if self._normalize:
+                    result /= self._clusters.particle_count()
+                tup[1].append(result)
+            self._clusters.collide(1, removals)
+            self._collisions += 1
+
+    def plot_against_collisions(self, name):
+        x = None
+        if self._normalize:
+            x = [i / self._collisions for i in range(self._collisions)] # self._initial_particle_count
+        else:
+            x = [i for i in range(self._collisions)]
+        plt.scatter(x, self._trackers[name][1])
+        plt.show()
+
+    def kneedle(self):
+        pass

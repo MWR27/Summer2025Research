@@ -1,27 +1,8 @@
-from clusters import Clusters
+from clusters import Clusters, ClusterTracker
 import matplotlib.pyplot as plt
-'''
-def plot_against_collisions(clusters, f, count, removals=0):
-    x = [i for i in range(count + 1)]
-    y = []
-    for i in range(count + 1):
-        y.append(f(i))
-        clusters.collide(1, removals)
-    plt.scatter(x, y)
-    plt.show()
-'''
+from scipy.interpolate import make_smoothing_spline
 
-def plot_against_collisions2(clusters, f, removals=0):
-    x = []
-    y = []
-    i = 0
-    while not clusters.has_one_cluster() and not clusters.is_empty():
-        x.append(i)
-        y.append(f(i))
-        i += 1
-        clusters.collide(1, removals)
-    plt.scatter(x, y)
-    plt.show()
+import numpy as np
 
 clusters = Clusters({2: 100000})
 clusters.collide(100000, 1)
@@ -30,10 +11,6 @@ data1 = clusters.cluster_list()
 plt.hist(data1)
 plt.show()
 
-clusters2 = Clusters({2: 100000})
-
-plot_against_collisions2(clusters2, lambda i: clusters2.cluster_count(2), 1)
-
 def max_cluster_size(clusters):
     c_keys = clusters.cluster_counts().keys()
     if len(c_keys) > 0:
@@ -41,6 +18,19 @@ def max_cluster_size(clusters):
     else:
         return 0
 
-clusters3 = Clusters({2: 100000})
+clusters2 = Clusters({2: 100000})
+tracker2 = ClusterTracker(clusters2, True)
+tracker2.add_tracker('cluster count', lambda c: c.cluster_count(2))
+tracker2.add_tracker('max cluster size', lambda c: max_cluster_size(c))
 
-plot_against_collisions2(clusters3, lambda i: max_cluster_size(clusters3), 1)
+tracker2.run(removals=1)
+
+tracker2.plot_against_collisions('cluster count')
+tracker2.plot_against_collisions('max cluster size')
+
+spl =  make_smoothing_spline([i / tracker2._collisions for i in range(tracker2._collisions)], tracker2._trackers['max cluster size'][1], lam=0)
+x_cont = np.arange(0, 1, 0.01)
+plt.plot(x_cont, spl(x_cont))
+plt.plot(x_cont, x_cont, '-.')
+plt.plot(x_cont, x_cont - spl(x_cont))
+plt.show()
