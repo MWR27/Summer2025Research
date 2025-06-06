@@ -4,9 +4,11 @@ class Clusters:
     def __init__(self, cluster_counts):
         self._cluster_counts = cluster_counts.copy()
         self._collision_count = 0
+        self._cluster_count = 0
         self._particle_count = 0
         self._weights = {}
         for cluster_size, cluster_count in self._cluster_counts.items():
+            self._cluster_count += cluster_count
             total_particle_count = cluster_size * cluster_count
             self._particle_count += total_particle_count
             self._weights[cluster_size] = total_particle_count
@@ -24,8 +26,10 @@ class Clusters:
     def cluster_counts(self):
         return self._cluster_counts.copy()
 
-    def cluster_count(self, cluster_size: int) -> int:
-        if cluster_size in self._cluster_counts:
+    def cluster_count(self, cluster_size: int =None) -> int:
+        if cluster_size == None:
+            return self._cluster_count
+        elif cluster_size in self._cluster_counts:
             return self._cluster_counts[cluster_size]
         else:
             return 0
@@ -72,6 +76,7 @@ class Clusters:
             self._weights[cluster_size] = cluster_size
         else:
             raise ValueError(f'cannot have cluster of size {cluster_size} in group of clusters')
+        self._cluster_count += 1
         self._particle_count += cluster_size
 
     def remove_cluster(self, cluster_size: int):
@@ -82,6 +87,7 @@ class Clusters:
             else:
                 self._cluster_counts[cluster_size] -= 1
                 self._weights[cluster_size] -= cluster_size
+            self._cluster_count -= 1
             self._particle_count -= cluster_size
         else:
             raise ValueError(f'no cluster of size {cluster_size} in group of clusters')
@@ -92,35 +98,39 @@ from scipy.interpolate import make_smoothing_spline
 import numpy as np
 
 class ClusterTracker:
-    def __init__(self, clusters, normalize=False):
+    def __init__(self, clusters):
         self._clusters = clusters
         self._trackers = {}
         self._collisions = 0
-        self._normalize = normalize
+        self._initial_cluster_count = self._clusters.cluster_count()
         self._initial_particle_count = self._clusters.particle_count()
 
-    def add_tracker(self, name, f):
-        self._trackers[name] = (lambda: f(self._clusters), [])
+    def add_tracker(self, name, f, normalize=None):
+        norm_func = None
+        if normalize != None:
+            norm_func = lambda i: normalize(self._clusters, i)
+        self._trackers[name] = (lambda: f(self._clusters), [], norm_func)
 
     def run(self, limit=math.inf, removals=0):
         while not self._clusters.has_one_cluster() and not self._clusters.is_empty() and self._collisions < limit:
             for tup in self._trackers.values():
                 result = tup[0]()
                 # if data must be normalized
-                if self._normalize:
-                    result /= self._clusters.particle_count()
+                if tup[2] != None:
+                    result = tup[2](result)
                 tup[1].append(result)
             self._clusters.collide(1, removals)
             self._collisions += 1
 
     def plot_against_collisions(self, name):
         x = None
-        if self._normalize:
-            x = [i / self._collisions for i in range(self._collisions)] # self._initial_particle_count
-        else:
+        if self._trackers[name][2] == None:
             x = [i for i in range(self._collisions)]
+        else:
+            x = [i / self._initial_cluster_count for i in range(self._collisions)] # self._initial_particle_count
         plt.scatter(x, self._trackers[name][1])
         plt.show()
 
-    def kneedle(self):
-        pass
+    def kneedle(self, name):
+        spl = make_smoothing_spline([i / self._collisions for i in range(self._collisions)], self._trackers[name][1], lam=0)
+        x_cont = np.arange(0, 1, 0.01)
