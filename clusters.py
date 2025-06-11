@@ -61,6 +61,17 @@ class Clusters:
                 # pick another cluster
                 cluster_size_b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
                 self.remove_cluster(cluster_size_b)
+                '''
+                while cluster_size_a + cluster_size_b - removals < 0:
+                    self.add_cluster(cluster_size_a)
+                    self.add_cluster(cluster_size_b)
+                    # pick one cluster
+                    cluster_size_a = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
+                    self.remove_cluster(cluster_size_a)
+                    # pick another cluster
+                    cluster_size_b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
+                    self.remove_cluster(cluster_size_b)
+                '''
                 if cluster_size_a + cluster_size_b - removals > 0:
                     self.add_cluster(cluster_size_a + cluster_size_b - removals)
                 successful_collisions += 1
@@ -134,3 +145,67 @@ class ClusterTracker:
     def kneedle(self, name):
         spl = make_smoothing_spline([i / self._collisions for i in range(self._collisions)], self._trackers[name][1], lam=0)
         x_cont = np.arange(0, 1, 0.01)
+
+import itertools
+
+def find_combos(cluster_counts: dict):
+    cluster_list = []
+    for cluster_size, cluster_count in cluster_counts.items():
+        for i in range(cluster_count):
+            cluster_list.append(cluster_size)
+    particle_count = 0
+    for cluster_size, cluster_count in cluster_counts.items():
+        particle_count += cluster_size * cluster_count
+    possible_products = set(cluster_counts.keys())
+    combos = itertools.combinations_with_replacement(possible_products, 2)
+    filtered = set(filter(lambda t: is_valid_combo(t, cluster_counts, particle_count), combos))
+    return filtered
+
+def idk(cluster_counts: dict, removals, level=0) -> set:
+    if not cluster_counts or (len(cluster_counts) == 1 and next(iter(cluster_counts.values())) == 1):
+        return set()
+    else:
+        particle_count = 0
+        for cluster_size, cluster_count in cluster_counts.items():
+            particle_count += cluster_size * cluster_count
+        possible_products = set()
+        combos = filter(lambda t: is_valid_combo(t, cluster_counts, particle_count), itertools.combinations_with_replacement(cluster_counts.keys(), 2))
+        for t in combos:
+            print(t)
+            possible_products.add(t)
+            d = cluster_counts.copy()
+            if d[t[0]] == 1:
+                del d[t[0]]
+            else:
+                d[t[0]] -= 1
+            if d[t[1]] == 1:
+                del d[t[1]]
+            else:
+                d[t[1]] -= 1
+            if t[0] + t[1] in d:
+                d[t[0] + t[1]] += 1
+            else:
+                d[t[0] + t[1]] = 1
+            
+            possible_products.update(idk(d, level + 1))
+        print(level)
+        return possible_products
+    
+def idk2(cluster_counts: dict, removals, level=0) -> set:
+    if not cluster_counts or (len(cluster_counts) == 1 and next(iter(cluster_counts.values())) == 1):
+        return set()
+    else:
+        particle_count = 0
+        possible_reactions = set()
+        possible_products = set()
+        for cluster_size in cluster_counts.keys():
+            for i in range(cluster_size, cluster_size * cluster_counts[cluster_size], cluster_size):
+                for j in range(i, cluster_size * cluster_counts[cluster_size] - (i - cluster_size), cluster_size):
+                    possible_reactions.add((i, j))
+        return possible_reactions
+
+def is_valid_combo(t: tuple, d: dict, particle_count: int) -> bool:
+    if t[0] == t[1]:
+        return d[t[0]] >= 2 and t[0] + t[1] <= particle_count
+    else:
+        return t[0] + t[1] <= particle_count

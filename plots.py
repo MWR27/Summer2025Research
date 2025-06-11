@@ -19,16 +19,19 @@ def max_cluster_size(clusters):
     else:
         return 0
 
-clusters = Clusters({3: 10000, 1: 50000})
+clusters = Clusters({1: 10000, 2: 10000, 3: 10000})
 tracker = ClusterTracker(clusters)
-tracker.add_tracker('cluster count', lambda c: c.cluster_count(1), lambda c, i: i / tracker._initial_cluster_count)
+tracker.add_tracker('cluster count', lambda c: c.cluster_count(3), lambda c, i: i / tracker._initial_cluster_count)
 tracker.add_tracker('max cluster size', lambda c: max_cluster_size(c), lambda c, i: i / c.particle_count())
 
-tracker.run(100, removals=2)
+tracker.run(100, removals=4)
 plt.hist(clusters.cluster_list())
 plt.show()
 
-tracker.run(removals=2)
+tracker.run(removals=4)
+x_cont = np.arange(0, .6, 0.01)
+f = lambda t: 1 / (1 / (2 - 4 * t) + 5 / 2)
+plt.plot(x_cont, f(x_cont))
 tracker.plot_against_collisions('cluster count')
 tracker.plot_against_collisions('max cluster size')
 
