@@ -1,4 +1,5 @@
 import random
+import math
 
 class Clusters:
     def __init__(self, cluster_counts):
@@ -12,6 +13,7 @@ class Clusters:
             total_particle_count = cluster_size * cluster_count
             self._particle_count += total_particle_count
             self._weights[cluster_size] = total_particle_count
+        self._initial_cluster_count = self._cluster_count
 
     @classmethod
     def create_monomers(cls, count: int):
@@ -33,9 +35,15 @@ class Clusters:
             return self._cluster_counts[cluster_size]
         else:
             return 0
+        
+    def initial_cluster_count(self) -> int:
+        return self._initial_cluster_count
 
     def collision_count(self) -> int:
         return self._collision_count
+
+    def cluster_sizes(self, limit: int =math.inf) -> list:
+        return [size for size in self._cluster_counts.keys() if size <= limit]
 
     def cluster_list(self) -> list:
         l = []
@@ -104,7 +112,6 @@ class Clusters:
             raise ValueError(f'no cluster of size {cluster_size} in group of clusters')
 
 import matplotlib.pyplot as plt
-import math
 from scipy.interpolate import make_smoothing_spline
 import numpy as np
 
@@ -191,7 +198,7 @@ def idk(cluster_counts: dict, removals, level=0) -> set:
         print(level)
         return possible_products
     
-def idk2(cluster_counts: dict, removals, level=0) -> set:
+def possible_reactions(cluster_counts: dict, removals) -> set:
     if not cluster_counts or (len(cluster_counts) == 1 and next(iter(cluster_counts.values())) == 1):
         return set()
     else:
@@ -202,6 +209,7 @@ def idk2(cluster_counts: dict, removals, level=0) -> set:
             for i in range(cluster_size, cluster_size * cluster_counts[cluster_size], cluster_size):
                 for j in range(i, cluster_size * cluster_counts[cluster_size] - (i - cluster_size), cluster_size):
                     possible_reactions.add((i, j))
+                    possible_products.add(i + j)
         return possible_reactions
 
 def is_valid_combo(t: tuple, d: dict, particle_count: int) -> bool:
