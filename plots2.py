@@ -10,21 +10,19 @@ clusters.collide(times=2000000, removals=1)
 
 # plotting
 sizes = clusters.cluster_sizes(50)
-print(sizes)
-counts = [clusters.cluster_count(size) / clusters.initial_cluster_count() for size in sizes]
-plt.xscale('log')
-plt.yscale('log')
-plt.scatter([i for i in clusters.cluster_sizes(50)], counts, zorder=1)
-plt.xlabel('Cluster Size')
-plt.ylabel('Cluster Count (Scaled)')
-popt, pcov = curve_fit(lambda t, a, b: a * t ** b, sizes, counts)
-a = popt[0]
-b = popt[1]
-print(a, b)
-x_cont = np.arange(2, 51, 1)
-y_fitted = a * (x_cont ** b)
-plt.plot(x_cont, y_fitted, zorder=2, color='red')
-plt.legend(['Cluster Count (Scaled)', f'$y={a}x^{b}$'])
+count_fracs = [clusters.cluster_count(size) / clusters.initial_cluster_count() for size in sizes]
+log_sizes = [math.log(i) for i in sizes]
+log_count_fracs = [math.log(i) for i in count_fracs]
+
+plt.scatter(log_sizes, log_count_fracs, zorder=1)
+plt.xlabel('log Cluster Size')
+plt.ylabel('log Cluster Fractions')
+
+intercept, slope = np.polynomial.polynomial.Polynomial.fit(log_sizes, log_count_fracs, 1).convert().coef
+x_cont = np.linspace(math.log(2), math.log(50), 2)
+y_fitted = intercept + slope * x_cont
+plt.plot(x_cont, y_fitted, zorder=2, color='red', label=f'$y={intercept}+{slope}x$')
+plt.legend()
 
 plt.show()
 print("Done!")
