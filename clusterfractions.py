@@ -15,13 +15,14 @@ log_sizes = [math.log(i) for i in sizes]
 log_count_fracs = [math.log(i) for i in count_fracs]
 
 plt.scatter(log_sizes, log_count_fracs, zorder=1)
-plt.xlabel('log Cluster Size')
-plt.ylabel('log Cluster Fractions')
+plt.xlabel('log cluster size')
+plt.ylabel('log cluster fraction')
 
 intercept, slope = np.polynomial.polynomial.Polynomial.fit(log_sizes, log_count_fracs, 1).convert().coef
 x_cont = np.linspace(math.log(2), math.log(50), 2)
 y_fitted = intercept + slope * x_cont
-plt.plot(x_cont, y_fitted, zorder=2, color='red', label=f'$y={intercept}+{slope}x$')
+equation = f'$y={intercept}+{slope}x$' if slope >= 0 else f'$y={intercept}-{-slope}x$'
+plt.plot(x_cont, y_fitted, zorder=2, color='red', label=equation)
 plt.legend()
 
 plt.show()
