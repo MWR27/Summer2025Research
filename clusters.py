@@ -147,6 +147,8 @@ class ClusterTracker:
         else:
             x = [i / self._initial_cluster_count for i in range(self._collisions)] # self._initial_particle_count
         plt.scatter(x, self._trackers[name][1])
+        plt.xlabel('collision fraction')
+        plt.ylabel(name)
         plt.show()
 
     def kneedle(self, name):

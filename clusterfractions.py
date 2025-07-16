@@ -26,4 +26,18 @@ plt.plot(x_cont, y_fitted, zorder=2, color='red', label=equation)
 plt.legend()
 
 plt.show()
+
+def max_cluster_size(clusters):
+    sizes = clusters.cluster_counts().keys()
+    if len(sizes) > 0:
+        return max(sizes)
+    else:
+        return 0
+
+clusters = Clusters({3: 1000000})
+tracker = ClusterTracker(clusters)
+tracker.add_tracker('fraction of max cluster size', lambda c: max_cluster_size(c), lambda c, i: i / c.particle_count())
+tracker.run(removals=2)
+tracker.plot_against_collisions('fraction of max cluster size')
+
 print("Done!")
