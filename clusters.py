@@ -198,7 +198,7 @@ def idk(cluster_counts: dict, removals, level=0) -> set:
         print(level)
         return possible_products
     
-def possible_reactions(cluster_counts: dict, removals) -> set:
+def potential_reactions(cluster_counts: dict, removals) -> set:
     if not cluster_counts or (len(cluster_counts) == 1 and next(iter(cluster_counts.values())) == 1):
         return set()
     else:
@@ -211,6 +211,15 @@ def possible_reactions(cluster_counts: dict, removals) -> set:
                     possible_reactions.add((i, j))
                     possible_products.add(i + j)
         return possible_reactions
+
+def possible_reactions(cluster_counts: dict, removals=0) -> set:
+    sizes = list(cluster_counts.keys())
+    possible_reactions = set()
+    for i in range(len(sizes)):
+        for j in range(i, len(sizes)):
+            if (i != j or cluster_counts[sizes[i]] >= 2) and sizes[i] + sizes[j] - removals >= 0:
+                possible_reactions.add((sizes[i], sizes[j]))
+    return possible_reactions
 
 def is_valid_combo(t: tuple, d: dict, particle_count: int) -> bool:
     if t[0] == t[1]:
