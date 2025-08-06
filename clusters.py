@@ -69,19 +69,12 @@ class Clusters:
                 # pick another cluster
                 cluster_size_b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
                 self.remove_cluster(cluster_size_b)
-                '''
-                while cluster_size_a + cluster_size_b - removals < 0:
-                    self.add_cluster(cluster_size_a)
-                    self.add_cluster(cluster_size_b)
-                    # pick one cluster
-                    cluster_size_a = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
-                    self.remove_cluster(cluster_size_a)
-                    # pick another cluster
-                    cluster_size_b = random.choices(population=list(self._cluster_counts.keys()), weights=list(self._weights.values()))[0]
-                    self.remove_cluster(cluster_size_b)
-                '''
                 if cluster_size_a + cluster_size_b - removals > 0:
                     self.add_cluster(cluster_size_a + cluster_size_b - removals)
+                elif cluster_size_a + cluster_size_b - removals < 0:
+                    self.add_cluster(cluster_size_a)
+                    self.add_cluster(cluster_size_b)
+                    raise RuntimeError(f'combined cluster size ({cluster_size_a} and {cluster_size_b}) smaller than required loss per collision ({removals})')
                 successful_collisions += 1
         self._collision_count += successful_collisions
         return successful_collisions
