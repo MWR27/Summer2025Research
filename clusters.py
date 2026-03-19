@@ -120,6 +120,26 @@ class ClusterTracker:
             norm_func = lambda i: normalize(self._clusters, i)
         self._trackers[name] = (lambda: f(self._clusters), [], norm_func)
 
+    def track_particle_count(self, name='particle count', normalize=None):
+        self.add_tracker(name=name, f=lambda clusters: clusters.particle_count(), normalize=normalize)
+
+    def track_sizes(self, *args, name='cluster count', normalize=None):
+        def create_tracker(size):
+            return lambda clusters: clusters.cluster_count(size)
+        for cluster_size in args:
+            if cluster_size <= 0:
+                raise ValueError(f'cannot have cluster of size {cluster_size} in group of clusters')
+            self.add_tracker(name=f'{cluster_size}-' + name, f=create_tracker(cluster_size), normalize=normalize)
+
+    # Add filter option?
+    def xs(self, normalized=False):
+        xs = None
+        if normalized:
+            xs = [i / self._initial_cluster_count for i in range(self._collisions)]
+        else:
+            xs = [i for i in range(self._collisions)]
+        return xs
+
     def run(self, limit=math.inf, removals=0):
         while not self._clusters.has_one_cluster() and not self._clusters.is_empty() and self._collisions < limit:
             for tup in self._trackers.values():
@@ -130,6 +150,10 @@ class ClusterTracker:
                 tup[1].append(result)
             self._clusters.collide(1, removals)
             self._collisions += 1
+
+    # Add filter option?
+    def results(self, name):
+        return self._trackers[name][1]
 
     def plot_against_collisions(self, name):
         x = None
