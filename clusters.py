@@ -108,7 +108,7 @@ import matplotlib.pyplot as plt
 
 class ClusterTracker:
     def __init__(self, clusters):
-        self._clusters = clusters
+        self._clusters: Clusters = clusters
         self._trackers = {}
         self._collisions = 0
         self._initial_cluster_count = self._clusters.cluster_count()
@@ -122,6 +122,9 @@ class ClusterTracker:
 
     def track_particle_count(self, name='particle count', normalize=None):
         self.add_tracker(name=name, f=lambda clusters: clusters.particle_count(), normalize=normalize)
+
+    def track_moment(self, moment: int, normalize=None):
+        self.add_tracker(name=f'm{moment}', f=lambda clusters: self._calculate_moment(clusters, moment), normalize=normalize)
 
     def track_sizes(self, *args, name='cluster count', normalize=None):
         def create_tracker(size):
@@ -165,3 +168,12 @@ class ClusterTracker:
         plt.xlabel('collision fraction')
         plt.ylabel(name)
         plt.show()
+    
+    @staticmethod
+    def _calculate_moment(clusters: Clusters, moment):
+        if moment == 1:
+            return clusters.particle_count() / clusters.initial_cluster_count()
+        sum = 0
+        for cluster_size, cluster_count in clusters.cluster_counts().items():
+            sum += cluster_size ** moment * cluster_count
+        return sum / clusters.initial_cluster_count()
